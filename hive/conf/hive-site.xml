@@ -1260,4 +1260,34 @@
   </description>
 </property>
 
+<!-- Properties can be found from cloudera manager -->
+<property>
+    <name>fs.default.name</name>
+    <value>hdfs://bigdatann.ib:8020</value>
+    <!--<value>hdfs://bigdatann.ib</value>-->
+    <description>Should point to the URI of your HDFS namenode. E.g. hdfs://myNameNode:8020/</description>
+</property>
+
+<property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://bigdatann.ib:8020</value>
+    <!--<value>hdfs://bigdatann.ib</value>-->
+    <description>Should be equal to fs.default.name</description>
+</property>
+
+<property>
+    <name>mapred.job.tracker</name>
+    <value>bigdatajt:50030</value>
+    <description>host:port of the jobtracker</description>
+</property>
+
+<property>
+    <name>mapreduce.framework.name</name>
+    <value>NONE</value>
+    <description>should be set to a non-empty string</description>
+</property>
+
+
+
+
 </configuration>

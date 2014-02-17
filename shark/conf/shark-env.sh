@@ -17,25 +17,25 @@
 
 # (Required) Amount of memory used per slave node. This should be in the same
 # format as the JVM's -Xmx option, e.g. 300m or 1g.
-export SPARK_MEM=1g
+export SPARK_MEM=32g
 
 # (Required) Set the master program's memory
 export SHARK_MASTER_MEM=1g
 
 # (Required) Point to your Scala installation.
-export SCALA_HOME=""
+export SCALA_HOME="/people/bdmyers/escience/spark/scala-2.9.3"
 
 # (Required) Point to the patched Hive binary distribution
-export HIVE_HOME=""
+export HIVE_HOME="/people/bdmyers/escience/spark/hive-0.9.0-bin"
 
 # (Optional) Specify the location of Hive's configuration directory. By default,
 # it points to $HIVE_HOME/conf
 #export HIVE_CONF_DIR="$HIVE_HOME/conf"
 
 # For running Shark in distributed mode, set the following:
-#export HADOOP_HOME=""
-#export SPARK_HOME=""
-#export MASTER=""
+export HADOOP_HOME="/opt/cloudera/parcels/CDH-4.4.0-1.cdh4.4.0.p0.39/lib/hadoop"
+export SPARK_HOME="/people/bdmyers/escience/spark/spark-0.8.0"
+export MASTER="spark://bigdatann.ib:7077"
 # Only required if using Mesos:
 #export MESOS_NATIVE_LIBRARY=/usr/local/lib/libmesos.so 
 
@@ -53,3 +53,9 @@ SPARK_JAVA_OPTS="-Dspark.local.dir=/tmp "
 SPARK_JAVA_OPTS+="-Dspark.kryoserializer.buffer.mb=10 "
 SPARK_JAVA_OPTS+="-verbose:gc -XX:-PrintGCDetails -XX:+PrintGCTimeStamps "
 export SPARK_JAVA_OPTS
+
+source $SPARK_HOME/conf/spark-env.sh
+
+# to get hive-site.xml
+CLASSPATH+=$HIVE_HOME/conf
+export CLASSPATH

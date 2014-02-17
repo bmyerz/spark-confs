@@ -19,3 +19,5 @@
 # - SPARK_WORKER_PORT / SPARK_WORKER_WEBUI_PORT
 # - SPARK_WORKER_INSTANCES, to set the number of worker processes per node
 
+export SCALA_HOME=/people/bdmyers/escience/spark/scala-2.9.3
+export SPARK_WORKER_MEMORY=64g
