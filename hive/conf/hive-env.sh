@@ -45,7 +45,7 @@
 
 
 # Set HADOOP_HOME to point to a specific hadoop install directory
-# HADOOP_HOME=${bin}/../../hadoop
+HADOOP_HOME=/opt/cloudera/parcels/CDH-4.4.0-1.cdh4.4.0.p0.39/lib/hadoop
 
 # Hive Configuration Directory can be controlled by:
 # export HIVE_CONF_DIR=
