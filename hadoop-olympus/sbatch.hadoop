@@ -4,7 +4,7 @@
 ### you may want to customize these
 # this is the number of nodes you request from SLURM. Add one for the
 # hadoop head node (so if you need 10 hadoop workers, ask SLURM for 11 nodes)
-#SBATCH --nodes=11
+SBATCH --nodes=11
 
 # this is the # of minutes SLURM will allow the job to run
 #SBATCH --time=240
@@ -46,7 +46,7 @@ setenv HADOOP_VERSION "0.20.2-cdh3u2"
 setenv HADOOP_SHARED_DATA "/pic/scratch/${USER}/hadoop_data" # if lustre is used
 setenv HADOOP_LOCAL_DIR "/scratch" # local to cluster node
 setenv HADOOP_HOME "${HADOOP_LOCAL_DIR}/hadoop-${HADOOP_VERSION}"
-setenv HADOOP_SHARED_DIR "$HOME/hadoop-olympus"
+setenv HADOOP_SHARED_DIR "$HOME/escience/spark/hadoop-olympus"
 setenv HADOOP_TARBALL "${HADOOP_SHARED_DIR}/downloaded/hadoop-0.20.2-cdh3u2.tar.gz"
 setenv HADOOP_TASKS_PER_NODE "15"
 
