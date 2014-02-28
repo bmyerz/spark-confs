@@ -1,0 +1,129 @@
+#!/bin/bash
+
+## this script runs on the olympus nodes to set up a hadoop cluster at job launch
+# Kevin Regimbal
+# PNNL Institutional Computing
+
+## dependencies
+## these must be defined in the environment for this script to work. Set in your sbatch file
+# HADOOP_LOCAL_DIR
+# HADOOP_TARBALL
+# HADOOP_HOME
+# HADOOP_CLUSTER_MODE
+# HADOOP_SHARED_DIR
+# HADOOP_SHARED_DATA (if in global mode)
+
+# capture the rank to provide node identifier
+pvar="${SLURM_NODEID:=0}"
+
+# switch to our working directory
+cd $HADOOP_LOCAL_DIR # inherited from environment, usually /scratch
+
+# copy hadoop into /scratch
+tar xzf $HADOOP_TARBALL
+
+## set up directory under which this job will run
+export JOB_DIR=${HADOOP_HOME}/results/${SLURM_JOB_NAME}/${SLURM_JOB_ID}
+mkdir -p $JOB_DIR
+
+## set up paths we need
+export HADOOP_CONF_DIR=$JOB_DIR/conf
+mkdir -p $HADOOP_CONF_DIR
+
+export HADOOP_LOG_DIR=$JOB_DIR/log
+mkdir -p $HADOOP_LOG_DIR
+
+export JOB_OUT_DIR=${JOB_DIR}/output
+mkdir -p $JOB_OUT_DIR
+
+## Create master and slave files
+# pick the rank-0 (first) node. Add -ib to the node name so we use the InfiniBand IPoIB interfaces
+$HADOOP_SHARED_DIR/bin/expand_nodes $SLURM_NODELIST | head -1 | sed -e "s/\$/-ib/" > $HADOOP_CONF_DIR/masters
+master=`head -1 $HADOOP_CONF_DIR/masters`
+
+# slaves.  Take 2nd though last node, trim off empty last line, add -ib
+$HADOOP_SHARED_DIR/bin/expand_nodes $SLURM_NODELIST | tail -n+2 | sed -e "s/\$/-ib/" > $HADOOP_CONF_DIR/slaves
+
+# capture number of slaves for calculations below
+slave_cnt=`cat $HADOOP_CONF_DIR/slaves|wc -l`
+
+
+### Create core-site.xml, mapred-site.xml, and hdfs-site.xml
+
+### We add the following vars are in conf/hadoop-site-template.xml so that it can be customized!
+#HADDOP_MASTER_HOST:HDFSPORT : HDFS host:port
+#HADDOP_MASTER_HOST:HMPRPORT : MapRed host:port
+#HMTASKS                     : No. of Map tasks
+#HRTASKS                     : No. of Reduce tasks
+#HTPN                        : Simulataneos tasks per slave
+#HTMPDIR                     : Hadoop temporary dir
+
+##calculate suitable defaults for map and reduce tasks
+mtasks=`expr \( $HADOOP_TASKS_PER_NODE - 1 \) \* $slave_cnt / 2`
+rtasks=`expr 2 \* $slave_cnt`
+hdfsport=54310
+
+## set maximum number of tasks per node (typically # of cores)
+tpn=$HADOOP_TASKS_PER_NODE
+
+## set the directory each node will use for its data
+if [ "$HADOOP_CLUSTER_MODE" == "shared" ]
+then
+   tmpdir="${HADOOP_SHARED_DATA}/${SLURM_JOB_NAME}/${SLURM_JOB_ID}/node-$pvar"
+   tmp=`echo "$tmpdir" | sed "s/\\//\\\\\\\\\//g"`
+   fsdefault=`echo "hdfs://$master:$hdfsport" | sed "s/\\//\\\\\\\\\//g"`
+   if [ -d "$tmpdir" ]
+   then
+      format=0
+   else
+      format=1
+      mkdir -p $tmpdir
+      # set the stripe size to match HDFS
+      lfs setstripe --size 134217728 $tmpdir
+   fi
+elif [ "$HADOOP_CLUSTER_MODE" == "lustre" ]
+then
+  # hdfs://HADDOP_MASTER_HOST:HDFSPORT
+   fsdefault=`echo "file://$HADOOP_SHARED_DATA" | sed "s/\\//\\\\\\\\\//g"`
+   tmp=`echo "$HADOOP_LOCAL_DIR" | sed "s/\\//\\\\\\\\\//g"`
+   #tmp=`echo "$HADOOP_SHARED_DATA" | sed "s/\\//\\\\\\\\\//g"`
+   format=0
+else
+   format=1
+   tmp=`echo "$HADOOP_LOCAL_DIR" | sed "s/\\//\\\\\\\\\//g"`
+   fsdefault=`echo "hdfs://$master:$hdfsport" | sed "s/\\//\\\\\\\\\//g"`
+fi
+
+## build core-site.xml
+sed -e "s/HADDOP_MASTER_HOST/$master/g" \
+    -e "s/HDFSPORT/54310/g" \
+    -e "s/HTMPDIR/$tmp/g" \
+    -e "s/HDFSDEFAULT/$fsdefault/g" \
+    $HADOOP_SHARED_DIR/conf/core-site.xml > $HADOOP_CONF_DIR/core-site.xml
+
+## build mapred-site.xml
+sed -e "s/HADDOP_MASTER_HOST/$master/g" \
+    -e "s/HMPRPORT/54311/g" -e "s/HMTASKS/$mtasks/g" \
+    -e "s/HRTASKS/$rtasks/g" -e "s/HTPN/$tpn/g" \
+    $HADOOP_SHARED_DIR/conf/mapred-site.xml > $HADOOP_CONF_DIR/mapred-site.xml
+
+## build hdfs-site.xml
+cat $HADOOP_SHARED_DIR/conf/hdfs-site.xml > $HADOOP_CONF_DIR/hdfs-site.xml
+
+# for some reason the slaves don't inherit this, so add to the hadoop-env
+echo "HADOOP_LOG_DIR=$HADOOP_LOG_DIR" >> $HADOOP_CONF_DIR/hadoop-env.sh
+
+## This script launches on all nodes.  Only do anything if MPI task 0
+if [ "$pvar" -eq "0" ]
+then
+   ### Format namenode if needed
+   if [ "$format" -eq "1" ]
+   then
+      echo 'Y' > /tmp/yes
+      cd $HADOOP_HOME
+      bin/hadoop namenode -format < /tmp/yes
+   fi
+
+fi
+
+exit 0

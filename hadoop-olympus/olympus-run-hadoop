@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# this script is intended to run on the olympus nodes
+# Kevin Regimbal
+# PNNL Institutional Computing
+
+## This script launches on all nodes.  Only do anything if MPI task 0
+pvar="${SLURM_NODEID:=0}"
+if [ "$pvar" -eq "0" ]
+then
+   ## we get HADOOP_HOME from jobs env
+   cd $HADOOP_HOME
+
+   ## set up paths we need
+   export JOB_DIR=${HADOOP_HOME}/results/${SLURM_JOB_NAME}/${SLURM_JOB_ID}
+   export HADOOP_CONF_DIR=$JOB_DIR/conf
+   export HADOOP_LOG_DIR=$JOB_DIR/log
+   export JOB_OUT_DIR=${JOB_DIR}/output
+
+   ### Start hadoop daemons
+   echo "Starting hadoop"
+   if [ "$HADOOP_CLUSTER_MODE" == "lustre" ]
+   then
+      bin/start-mapred.sh
+   else
+      bin/start-all.sh
+   fi
+
+   ## useful when troubleshooting
+   export master=`cat $HADOOP_CONF_DIR/masters`
+   echo "To work interactively:"
+   echo "  ssh $master"
+   echo "  setenv HADOOP_CONF_DIR \"$HADOOP_CONF_DIR\""
+   echo "  cd $HADOOP_HOME"
+   echo "  if you have x-windows, you can also start firefox and point to"
+   echo "  http://$master:50030"
+   echo "  to be able to use the hadoop web console interface"
+
+   ## wait for things to get going
+   echo "Sleeping 30s to allow cluster to start"
+   sleep 30
+
+   ## here is where we run our jobs
+   #######################################################################
+   #  Real work here
+   #######################################################################
+
+   ## job specific commands here
+
+   # example below runs the randomwriter and sorter benchmark
+   if [ "$HADOOP_MODE" == "benchmark" ]
+   then
+
+      # this allows this script to work properly while switching between local, shared, and lustre modes
+      if [ "$HADOOP_CLUSTER_MODE" == "lustre" ]
+      then
+         prefix="$HADOOP_SHARED_DATA/"
+      else
+         prefix=""
+      fi
+
+      echo "Running RandomWriter"
+      command="bin/hadoop jar hadoop-examples-${HADOOP_VERSION}.jar randomwriter -D test.randomwriter.maps_per_host=10 ${prefix}random-data"
+      echo "Running $command" >&2
+      $command
+
+      command="bin/hadoop jar hadoop-examples-${HADOOP_VERSION}.jar sort ${prefix}random-data ${prefix}sorted-data"
+      echo "Running $command" >&2
+      $command
+
+      # The validate portion doesn't seem to work in lustre mode. The path is hard-coded in software.
+      if [ "$HADOOP_CLUSTER_MODE" == "lustre" ]
+      then
+         mkdir ${prefix}sortvalidate
+         pdsh -w "${SLURM_NODELIST}"ln -s ${prefix}sortvalidate /tmp/sortvalidate
+      fi
+      command="bin/hadoop jar hadoop-test-${HADOOP_VERSION}.jar testmapredsort -sortInput ${prefix}random-data -sortOutput ${prefix}sorted-data"
+      echo "Running $command" >&2
+      $command
+
+      # clean up after ourselves
+      # this allows this script to work properly while switching between local, shared, and lustre modes
+      if [ "$HADOOP_CLUSTER_MODE" == "shared" ]
+      then
+         rm -rf "${HADOOP_SHARED_DATA}/${SLURM_JOB_NAME}/${SLURM_JOB_ID}/node-$pvar"
+      elif [ "$HADOOP_CLUSTER_MODE" == "lustre" ]
+      then
+         rm -rf "${prefix}random-data"
+         rm -rf "${prefix}sorted-data"
+      fi
+   else
+      # if not benchmark, then assume interactive. The MPI job sleeps for all but 2 minutes of the total job time
+      ## uncomment if you want to work interactively
+      sleep ${HADOOP_SLEEP}
+
+      # of course you could list hadoop jobs here if you wanted
+   fi
+
+
+   ## now we're done
+   echo "Stopping hadoop"
+   bin/stop-all.sh
+
+fi
+
+exit 0

@@ -1,0 +1,77 @@
+#!/bin/csh
+## SLURM variables
+
+### you may want to customize these
+# this is the number of nodes you request from SLURM. Add one for the
+# hadoop head node (so if you need 10 hadoop workers, ask SLURM for 11 nodes)
+#SBATCH --nodes=11
+
+# this is the # of minutes SLURM will allow the job to run
+#SBATCH --time=240
+
+# this is the name of the job that will appear in squeue, also directories
+# that the setup scripts run
+#SBATCH --job-name my_hadoop
+
+### these probably won't change
+# ntasks-per-node should be set to 1 (MPI just starts everything, hadoop
+# takes it from there
+#SBATCH --ntasks-per-node=1
+
+# don't share nodes even though SLURM thinks we are only using 1 processor
+#SBATCH --exclusive
+
+############################################################################
+# set up hadoop to run on olympus
+############################################################################
+
+## you may want to customize these
+# HADOOP_CLUSTER_MODE should be set to "local" if you want to use HDFS.
+# If you use HDFS, you must copy data into the filesystem each time you start
+# HADOOP_CLUSTER_MODE should be set to "lustre" to use lustre directly
+setenv HADOOP_CLUSTER_MODE "lustre" # "local" or "lustre"
+
+## HADOOP_MODE sets whether olympus-run-hadoop will run a sort benchmark
+# or just sleep expecting interactive work.
+# if you run interactively, look at the slurm-<jobid>.log file for instructions
+# on how to use hadoop interactively
+setenv HADOOP_MODE "benchmark" # "benchmark" or "interactive"
+
+# HADOOP_SLEEP must be 2-3 minutes shorter than 60 * time (above) if you want configuration
+# and logs collected at the conclusion of the run.
+setenv HADOOP_SLEEP "14220" # (time - 3) * 60
+
+### these probably won't change
+setenv HADOOP_VERSION "0.20.2-cdh3u2"
+setenv HADOOP_SHARED_DATA "/pic/scratch/${USER}/hadoop_data" # if lustre is used
+setenv HADOOP_LOCAL_DIR "/scratch" # local to cluster node
+setenv HADOOP_HOME "${HADOOP_LOCAL_DIR}/hadoop-${HADOOP_VERSION}"
+setenv HADOOP_SHARED_DIR "$HOME/hadoop-olympus"
+setenv HADOOP_TARBALL "${HADOOP_SHARED_DIR}/downloaded/hadoop-0.20.2-cdh3u2.tar.gz"
+setenv HADOOP_TASKS_PER_NODE "15"
+
+############################################################################
+# Print out some information for later debugging
+############################################################################
+limit
+module list
+printenv
+
+############################################################################
+# Actually run the job
+############################################################################
+
+
+# this will set up a hadoop cluster
+srun $HADOOP_SHARED_DIR/olympus-build-hadoop
+
+# this will start the hadoop software.
+srun $HADOOP_SHARED_DIR/olympus-run-hadoop
+
+# uncomment this to gather all the configuraiton and log files at the 
+# conclusion of the run to help with troubleshooting
+#srun $HADOOP_SHARED_DIR/olympus-gather-hadoop
+
+############################################################################
+# End of the job script
+############################################################################

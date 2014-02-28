@@ -1,0 +1,25 @@
+#!/bin/bash
+
+## all nodes do this part
+## we get HADOOP_HOME from jobs env
+#cd $HADOOP_HOME
+
+export JOB_DIR=${HADOOP_HOME}/results/${SLURM_JOB_NAME}/${SLURM_JOB_ID}
+
+## set up paths we need
+#export HADOOP_CONF_DIR=$JOB_DIR/conf
+
+#export HADOOP_LOG_DIR=$JOB_DIR/log
+
+#export JOB_OUT_DIR=${JOB_DIR}/output
+
+cd $JOB_DIR
+
+export NODENAME=`hostname`
+
+export TARGET_DIR=${HADOOP_SHARED_DIR}/results/${SLURM_JOB_NAME}/${SLURM_JOB_ID}/nodes/${NODENAME}
+mkdir -p $TARGET_DIR
+
+tar czf ${TARGET_DIR}/${NODENAME}.tar.gz conf log output
+
+exit 0

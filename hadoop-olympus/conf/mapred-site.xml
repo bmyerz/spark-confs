@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+<property>
+  <name>mapred.job.tracker</name>
+  <value>HADDOP_MASTER_HOST:HMPRPORT</value>
+</property>
+
+<property>
+  <name>mapred.job.tracker.handler.count</name>
+  <value>64</value>
+</property>
+
+<property>
+  <name>mapred.map.tasks</name>
+  <value>HMTASKS</value>
+</property>
+
+<property>
+  <name>mapred.reduce.tasks</name>
+  <value>HRTASKS</value>
+</property>
+
+<property>
+  <name>mapred.reduce.parallel.copies</name>
+  <value>50</value>
+</property>
+
+<property>
+  <name>mapred.map.child.java.opts</name>
+  <value>-Xmx512M</value>
+</property>
+
+<property>
+  <name>mapred.reduce.child.java.opts</name>
+  <value>-Xmx1024M</value>
+</property>
+
+<property>
+  <name>mapred.tasktracker.map.tasks.maximum</name>
+  <value>HTPN</value>
+</property>
+
+<property>
+  <name>mapred.tasktracker.reduce.tasks.maximum</name>
+  <value>HTPN</value>
+</property>
+
+<property>
+  <name>mapred.output.compress</name>
+  <value>false</value>
+</property>
+
+<property>
+  <name>mapred.compress.map.output</name>
+  <value>false</value>
+</property>
+
+<property>
+  <name>mapred.output.compression.type</name>
+  <value>BLOCK</value>
+</property>
+
+<property>
+  <name>mapred.output.compression.codec</name>
+  <value>org.apache.hadoop.io.compress.DefaultCodec</value>
+</property>
+
+<property>
+  <name>mapred.map.tasks.speculative.execution</name>
+  <value>false</value>
+</property>
+
+<property>
+  <name>mapred.reduce.tasks.speculative.execution</name>
+  <value>false</value>
+</property>
+
+<property>
+  <name>mapred.temp.dir</name> 
+  <value>${fs.default.name}/mapred/temp</value> 
+</property>
+
+<property>
+  <name>mapred.system.dir</name>
+  <value>${fs.default.name}/mapred/system</value>
+  <description>The directory where MapReduce stores control files.
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.jobtracker.staging.root.dir</name>
+  <value>${fs.default.name}/mapred/staging</value>
+  <description>The root of the staging area for users' job files
+  In practice, this should be the directory where users' home
+  directories are located (usually /user)
+  </description>
+</property>
+
+
+</configuration>
