@@ -38,8 +38,14 @@ mkdir -p $JOB_OUT_DIR
 
 ## Create master and slave files
 # pick the rank-0 (first) node. Add -ib to the node name so we use the InfiniBand IPoIB interfaces
-$HADOOP_SHARED_DIR/bin/expand_nodes $SLURM_NODELIST | head -1 | sed -e "s/\$/-ib/" > $HADOOP_CONF_DIR/masters
+echo $SLURM_NODELIST | head -1 | sed -e "s/\$/-ib/" > $HADOOP_CONF_DIR/masters
+echo "node list: $SLURM_NODELIST"
+echo "node list expanded"
+$HADOOP_SHARED_DIR/bin/expand_nodes $SLURM_NODELIST
+echo "-----"
 master=`head -1 $HADOOP_CONF_DIR/masters`
+cat $HADOOP_CONF_DIR/masters
+echo "master = $master"
 
 # slaves.  Take 2nd though last node, trim off empty last line, add -ib
 $HADOOP_SHARED_DIR/bin/expand_nodes $SLURM_NODELIST | tail -n+2 | sed -e "s/\$/-ib/" > $HADOOP_CONF_DIR/slaves
