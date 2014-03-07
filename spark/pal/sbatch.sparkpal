@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH --partition=pal
+
+
+# assign roles
+# sbatch should actually make sure that $HOSTNAME==$PAL_MASTER (ie the node running this script is first on the nodelist)
+export PAL_MASTER=`scontrol show hostname $SLURM_NODELIST | head -n 1 | awk '{ print $1 "-ib" }'`
+scontrol show hostname $SLURM_NODELIST | awk '{ print $1 "-ib" }' | tail -n+2 >conf/slaves
+
+# start master and slaves
+bin/start-master.sh
+bin/start-slaves.sh
+
+# this command only needs to be run on one task since Spark handles the job launching
+srun --nodes=1 --ntasks-per-node ./run-example org.apache.spark.examples.SparkPageRank spark://$PAL_MASTER:7077 /people/bdmyers/escience/sp2b.100mb.i 10
+
+
