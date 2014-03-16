@@ -8,7 +8,7 @@
 export PAL_MASTER=`hostname`
 
 mkdir -p tmp
-export SPARK_SLAVES=`mktemp tmp/slaves.XXXXXX`
+export SPARK_SLAVES=tmp/slaves.$SLURM_JOB_ID
 scontrol show hostname $SLURM_NODELIST | awk '{ print $1 "-ib" }' | tail -n+2 >$SPARK_SLAVES
 
 # start master and slaves
