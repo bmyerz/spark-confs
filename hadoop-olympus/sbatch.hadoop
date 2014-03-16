@@ -4,7 +4,9 @@
 ### you may want to customize these
 # this is the number of nodes you request from SLURM. Add one for the
 # hadoop head node (so if you need 10 hadoop workers, ask SLURM for 11 nodes)
-SBATCH --nodes=11
+#SBATCH --nodes=4
+
+#SBATCH --partition=pal
 
 # this is the # of minutes SLURM will allow the job to run
 #SBATCH --time=240
