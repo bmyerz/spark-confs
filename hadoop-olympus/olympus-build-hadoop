@@ -38,7 +38,8 @@ mkdir -p $JOB_OUT_DIR
 
 ## Create master and slave files
 # pick the rank-0 (first) node. Add -ib to the node name so we use the InfiniBand IPoIB interfaces
-echo $SLURM_NODELIST | head -1 | sed -e "s/\$/-ib/" > $HADOOP_CONF_DIR/masters
+#echo $SLURM_NODELIST | head -1 | sed -e "s/\$/-ib/" > $HADOOP_CONF_DIR/masters
+$HADOOP_SHARED_DIR/bin/expand_nodes $SLURM_NODELIST | head -1 | sed -e "s/\$/-ib/" > $HADOOP_CONF_DIR/masters
 echo "node list: $SLURM_NODELIST"
 echo "node list expanded"
 $HADOOP_SHARED_DIR/bin/expand_nodes $SLURM_NODELIST
@@ -100,6 +101,8 @@ else
    fsdefault=`echo "hdfs://$master:$hdfsport" | sed "s/\\//\\\\\\\\\//g"`
 fi
 
+echo "HADOOP_SHARED_DIR=$HADOOP_SHARED_DIR"
+echo "HADOOP_CONF_DIR=$HADOOP_CONF_DIR"
 ## build core-site.xml
 sed -e "s/HADDOP_MASTER_HOST/$master/g" \
     -e "s/HDFSPORT/54310/g" \
