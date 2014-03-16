@@ -20,4 +20,5 @@
 # - SPARK_WORKER_INSTANCES, to set the number of worker processes per node
 
 export SCALA_HOME=/people/bdmyers/escience/spark/scala-2.9.3
-export SPARK_WORKER_MEMORY=64g
+export SPARK_WORKER_MEMORY=52g
+export SPARK_JAVA_OPTS="-Xms52g -Xmx52g"
