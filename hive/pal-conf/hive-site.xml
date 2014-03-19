@@ -52,13 +52,13 @@
 
 <property>
   <name>hive.cli.print.header</name>
-  <value>false</value>
+  <value>true</value>
   <description>Whether to print the names of the columns in query output.</description>
 </property>
 
 <property>
   <name>hive.cli.print.current.db</name>
-  <value>false</value>
+  <value>true</value>
   <description>Whether to include the current database in the hive prompt.</description>
 </property>
 
@@ -102,7 +102,7 @@
 <property>
   <name>hive.metastore.local</name>
   <value>true</value>
-  <description>controls whether to connect to remove metastore server or open a new metastore server in Hive Client JVM</description>
+  <description>controls whether to connect to remote metastore server or open a new metastore server in Hive Client JVM</description>
 </property>
 
 <property>
@@ -227,7 +227,8 @@
 
 <property>
   <name>hive.metastore.warehouse.dir</name>
-  <value>/user/hive/warehouse</value>
+  <!--<value>/user/hive/warehouse</value>-->
+  <value>/pic/scratch/bdmyers/hadoop_data/user/hive/warehouse</value>
   <description>location of default database for the warehouse</description>
 </property>
 
@@ -1263,19 +1264,22 @@
 <!-- Properties can be found from cloudera manager -->
 <property>
     <name>fs.default.name</name>
-    <value>hdfs://node0398-ib:54310</value>
+    <!--<value>hdfs://node0398-ib:54310</value>-->
+    <value>file:///pic/scratch/bdmyers/hadoop_data</value>
     <description>Should point to the URI of your HDFS namenode. E.g. hdfs://myNameNode:8020/</description>
 </property>
 
 <property>
     <name>fs.defaultFS</name>
-    <value>hdfs://node0398-ib:54310</value>
+    <!--<value>hdfs://node0398-ib:54310</value>-->
+    <value>file:///pic/scratch/bdmyers/hadoop_data</value>
     <description>Should be equal to fs.default.name</description>
 </property>
 
 <property>
     <name>mapred.job.tracker</name>
-    <value>node0398-ib:50030</value>
+    <!--<value>node0398-ib:50030</value>-->
+    <value>NONE</value>
     <description>host:port of the jobtracker</description>
 </property>
 
