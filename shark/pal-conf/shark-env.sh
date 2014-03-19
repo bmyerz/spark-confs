@@ -36,7 +36,7 @@ export HIVE_HOME="/people/bdmyers/escience/spark/hive-0.9.0-bin"
 #export HADOOP_HOME="/scratch/hadoop-0.20.2-cdh3u2"
 export HADOOP_HOME="/scratch/hadoop-1.2.1"
 export SPARK_HOME="/people/bdmyers/escience/spark/spark-0.8.1-incubating-bin-hadoop1"
-export MASTER="spark://node0398.local:7077"
+export MASTER="spark://$SPARK_MASTER_HOST:7077"
 # Only required if using Mesos:
 #export MESOS_NATIVE_LIBRARY=/usr/local/lib/libmesos.so 
 
