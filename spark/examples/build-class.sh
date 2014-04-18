@@ -7,9 +7,8 @@ pushd target/scala-2.9.3/classes
 CLASSPATH=`../../../../bin/compute-classpath.sh`
 #$SCALA_HOME/bin/scalac -classpath $CLASSPATH ../../../src/main/scala/$GRAPHX_PKG/$filebase.scala
 scalac -classpath $CLASSPATH ../../../src/main/scala/$PKG/$filebase.scala
-popd
 
 # update the jar file
-pushd src/main/scala
 jar uf ../../spark-examples_2.9.3-0.8.0-incubating.jar $PKG/$filebase*.class
 popd
+

@@ -31,12 +31,13 @@ import org.apache.spark.SparkContext
  * where URL and their neighbors are separated by space(s).
  */
 object SparkPageRank {
+    println("bmyerz mod")
   def timeStart() : Double = {
     return System.nanoTime();
   }
   def timeEnd(start:Double) : Double = {
     val end = System.nanoTime();
-    return (end-start)/10e9
+    return (end-start)/1e9
   }
 
   def main(args: Array[String]) {
