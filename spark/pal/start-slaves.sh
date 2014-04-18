@@ -38,12 +38,12 @@ fi
 # Launch the slaves
 echo "workers $SPARK_WORKER_INSTANCES"
 if [ "$SPARK_WORKER_INSTANCES" = "" ]; then
-  exec "$bin/slaves.sh" cd "$SPARK_HOME" \; "$bin/start-slave.sh" 1 spark://$SPARK_MASTER_IP:$SPARK_MASTER_PORT
+  exec "$bin/slaves-hostarg.sh" cd "$SPARK_HOME" \; "$bin/start-slave.sh" 1 spark://$SPARK_MASTER_IP:$SPARK_MASTER_PORT
 else
   if [ "$SPARK_WORKER_WEBUI_PORT" = "" ]; then
     SPARK_WORKER_WEBUI_PORT=8081
   fi
   for ((i=0; i<$SPARK_WORKER_INSTANCES; i++)); do
-    "$bin/slaves.sh" cd "$SPARK_HOME" \; "$bin/start-slave.sh" $(( $i + 1 ))  spark://$SPARK_MASTER_IP:$SPARK_MASTER_PORT --webui-port $(( $SPARK_WORKER_WEBUI_PORT + $i ))
+    "$bin/slaves-hostarg.sh" cd "$SPARK_HOME" \; "$bin/start-slave.sh" $(( $i + 1 ))  spark://$SPARK_MASTER_IP:$SPARK_MASTER_PORT --webui-port $(( $SPARK_WORKER_WEBUI_PORT + $i ))
   done
 fi
