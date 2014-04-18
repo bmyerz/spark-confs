@@ -31,31 +31,56 @@ import org.apache.spark.SparkContext
  * where URL and their neighbors are separated by space(s).
  */
 object SparkPageRank {
+  def timeStart() : Double = {
+    return System.nanoTime();
+  }
+  def timeEnd(start:Double) : Double = {
+    val end = System.nanoTime();
+    return (end-start)/10e9
+  }
+
   def main(args: Array[String]) {
     if (args.length < 3) {
-      System.err.println("Usage: PageRank <master> <file> <number_of_iterations>")
+      System.err.println("Usage: PageRank:) <master> <file> <tol>")
       System.exit(1)
     }
-    var iters = args(2).toInt
+    var tol = args(2).toFloat
     val ctx = new SparkContext(args(0), "PageRank",
       System.getenv("SPARK_HOME"), SparkContext.jarOfClass(this.getClass))
     val lines = ctx.textFile(args(1), 1)
     val links = lines.map{ s =>
       val parts = s.split("\\s+")
       (parts(0), parts(1))
-    }.distinct().groupByKey().cache()
+    }.distinct().groupByKey().cache()  // groupby forms edges lists
     var ranks = links.mapValues(v => 1.0)
+    val activeStart = ranks
 
-    for (i <- 1 to iters) {
+    val t = timeStart()
+    var iter = 0
+    var acount = activeStart.count()
+    while (acount > 0) {
+      val ti = timeStart()
       val contribs = links.join(ranks).values.flatMap{ case (urls, rank) =>
         val size = urls.size
         urls.map(url => (url, rank / size))
       }
-      ranks = contribs.reduceByKey(_ + _).mapValues(0.15 + 0.85 * _)
+      val newranks = contribs.reduceByKey(_ + _).mapValues(0.15 + 0.85 * _)
+      val activeNow = ranks.zip(newranks).filter{ p =>
+        val r = p._1;
+        val nr = p._2;
+        nr._2 - r._2 > tol
+      }
+      acount = activeNow.count()
+      ranks = newranks;
+      val timecum = timeEnd(t)
+      val timeiter = timeEnd(ti)
+      println("iteration "+iter+"\ttime="+timeiter+"\tcum="+timecum+"\tactive="+acount)
+
+      iter +=1
     }
 
-    val output = ranks.collect()
-    output.foreach(tup => println(tup._1 + " has rank: " + tup._2 + "."))
+    val output = ranks.values.sum()
+    println("sum of ranks="+output)
 
     System.exit(0)
   }
