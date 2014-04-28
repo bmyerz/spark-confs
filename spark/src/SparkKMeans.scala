@@ -28,7 +28,7 @@ import java.util
  */
 object SparkKMeans {
   val rand = new Random(42)
-    
+
   def parseVector(line: String, burn: Integer=2, delim: String = ","): Vector = {
     val features = line.split(',')
     val arr = Array[Double](features.length - burn)
@@ -40,7 +40,7 @@ object SparkKMeans {
   }
 
   def elementWiseDivide(v1:Vector, v2:Vector) {
-    val list = new util.Array[Double](v.elements.length)
+    val list = new Array[Double](v.elements.length)
     for (i <- 0 to (v.elements.length-1)) {
       list.add(v(i) / sum(i))
     }
@@ -71,7 +71,7 @@ object SparkKMeans {
     val sc = new SparkContext(args(0), "SparkKMeans",
       System.getenv("SPARK_HOME"), SparkContext.jarOfClass(this.getClass))
     val lines = sc.textFile(args(1))
-    val data = lines.map(parseVector _ burn).cache()
+    val data = lines.map(parseVector _).cache()
     val K = args(2).toInt
     val convergeDist = args(3).toDouble
 
