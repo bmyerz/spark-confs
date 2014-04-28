@@ -91,7 +91,10 @@ object SparkKMeans {
     val sum = data.reduce(_ + _)
     var normalized_data = data;
     if (args(4).toBoolean) {
+      println("normalizing")
       normalized_data = data.map( v => elementWiseDivide(v, sum))
+    } else {
+        println("not normalizing")
     }
 
 
@@ -118,15 +121,15 @@ object SparkKMeans {
         kPoints(newP._1) = newP._2
       }
       val iter_runtime = timeEnd(iter_start)
-      println("Finished iteration (delta = " + tempDist + ") (iter_runtime = " + iter_runtime + ")")
-      ++iter
+      println("Finished iteration " + iter + " (delta = " + tempDist + ") (iter_runtime = " + iter_runtime + ")")
+      iter+=1
     }
 
     val kmeans_runtime = timeEnd(kmeans_start)
 
     println("Final centers:")
     kPoints.foreach(println)
-    println("kmeans_runtime " kmeans_runtime)
+    println("kmeans_runtime " + kmeans_runtime)
     System.exit(0)
   }
 }
