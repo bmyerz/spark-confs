@@ -27,11 +27,16 @@ import java.util
  * K-means clustering.
  */
 object SparkKMeans {
-  val R = 1000     // Scaling factor
   val rand = new Random(42)
     
-  def parseVector(line: String): Vector = {
-    new Vector(line.split(' ').map(_.toDouble))
+  def parseVector(line: String, burn: Integer=2, delim: String = ","): Vector = {
+    val features = line.split(',')
+    val arr = Array[Double](features.length - burn)
+    for (i <- burn until features.length) {
+      arr(i-burn) = features(i)._toDouble
+    }
+
+    new Vector(arr)
   }
 
   def elementWiseDivide(v1:Vector, v2:Vector) {
@@ -59,20 +64,23 @@ object SparkKMeans {
   }
 
   def main(args: Array[String]) {
-    if (args.length < 4) {
-        System.err.println("Usage: SparkKMeans <master> <file> <k> <convergeDist>")
+    if (args.length < 6) {
+        System.err.println("Usage: SparkKMeans <master> <file> <k> <convergeDist> <normalize?> <burn?>")
         System.exit(1)
     }
     val sc = new SparkContext(args(0), "SparkKMeans",
       System.getenv("SPARK_HOME"), SparkContext.jarOfClass(this.getClass))
     val lines = sc.textFile(args(1))
-    val data = lines.map(parseVector _).cache()
+    val data = lines.map(parseVector _ burn).cache()
     val K = args(2).toInt
     val convergeDist = args(3).toDouble
 
     // normalize all features so they are weighted equally
     val sum = data.reduce(_ + _)
-    val normalized_data = data.map( v => elementWiseDivide(v, sum))
+    var normalized_data = data;
+    if (args(4).toBoolean) {
+      normalized_data = data.map( v => elementWiseDivide(v, sum))
+    }
   
     val kPoints = normalized_data.takeSample(withReplacement = false, K, 42).toArray
     var tempDist = 1.0
