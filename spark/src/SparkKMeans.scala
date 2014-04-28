@@ -27,6 +27,14 @@ import java.util
  * K-means clustering.
  */
 object SparkKMeans {
+  def timeStart() : Double = {
+    return System.nanoTime();
+  }
+  def timeEnd(start:Double) : Double = {
+    val end = System.nanoTime();
+    return (end-start)/10e9
+  }
+
   val rand = new Random(42)
 
   def parseVector(line: String): Vector = {
@@ -68,7 +76,7 @@ object SparkKMeans {
 
   def main(args: Array[String]) {
     if (args.length < 6) {
-        System.err.println("Usage: SparkKMeans <master> <file> <k> <convergeDist> <normalize?> <burn?>")
+        System.err.println("Usage: SparkKMeans <master> <file> <k> <convergeDist> <normalize?> <maxiters>")
         System.exit(1)
     }
     val sc = new SparkContext(args(0), "SparkKMeans",
@@ -77,6 +85,7 @@ object SparkKMeans {
     val data = lines.map(parseVector _).cache()
     val K = args(2).toInt
     val convergeDist = args(3).toDouble
+    val maxiters = args(5).toInt
 
     // normalize all features so they are weighted equally
     val sum = data.reduce(_ + _)
@@ -84,11 +93,16 @@ object SparkKMeans {
     if (args(4).toBoolean) {
       normalized_data = data.map( v => elementWiseDivide(v, sum))
     }
-  
+
+
     val kPoints = normalized_data.takeSample(withReplacement = false, K, 42).toArray
     var tempDist = 1.0
 
-    while(tempDist > convergeDist) {
+    val kmeans_start = timeStart()
+
+    var iter = 0
+    while((tempDist > convergeDist) && ((maxiters==0) || (iter < maxiters))) {
+      val iter_start = timeStart()
       val closest = normalized_data.map (p => (closestPoint(p, kPoints), (p, 1)))
       
       val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
@@ -103,11 +117,16 @@ object SparkKMeans {
       for (newP <- newPoints) {
         kPoints(newP._1) = newP._2
       }
-      println("Finished iteration (delta = " + tempDist + ")")
+      val iter_runtime = timeEnd(iter_start)
+      println("Finished iteration (delta = " + tempDist + ") (iter_runtime = " + iter_runtime + ")")
+      ++iter
     }
+
+    val kmeans_runtime = timeEnd(kmeans_start)
 
     println("Final centers:")
     kPoints.foreach(println)
+    println("kmeans_runtime " kmeans_runtime)
     System.exit(0)
   }
 }
