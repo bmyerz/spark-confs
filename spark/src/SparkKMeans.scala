@@ -32,7 +32,7 @@ object SparkKMeans {
   }
   def timeEnd(start:Double) : Double = {
     val end = System.nanoTime();
-    return (end-start)/10e9
+    return (end-start)/1e9
   }
 
   val rand = new Random(42)
