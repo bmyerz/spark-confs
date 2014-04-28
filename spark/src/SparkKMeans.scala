@@ -29,20 +29,23 @@ import java.util
 object SparkKMeans {
   val rand = new Random(42)
 
-  def parseVector(line: String, burn: Integer=2, delim: String = ","): Vector = {
-    val features = line.split(',')
-    val arr = Array[Double](features.length - burn)
+  def parseVector(line: String): Vector = {
+    val burn = 2
+    val delim = ","
+
+    val features = line.split(delim)
+    val arr = new Array[Double](features.length - burn)
     for (i <- burn until features.length) {
-      arr(i-burn) = features(i)._toDouble
+      arr(i-burn) = features(i).toDouble
     }
 
     new Vector(arr)
   }
 
-  def elementWiseDivide(v1:Vector, v2:Vector) {
-    val list = new Array[Double](v.elements.length)
-    for (i <- 0 to (v.elements.length-1)) {
-      list.add(v(i) / sum(i))
+  def elementWiseDivide(v1:Vector, v2:Vector): Vector = {
+    val list = new Array[Double](v1.elements.length)
+    for (i <- 0 to (v1.elements.length-1)) {
+      list(i) =  v1(i) / v2(i)
     }
     new Vector(list)
   }
