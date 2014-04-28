@@ -96,6 +96,7 @@ object SparkKMeans {
 
 
     val kPoints = normalized_data.takeSample(withReplacement = false, K, 42).toArray
+    println("features length = " + kPoints(0).length)
     var tempDist = 1.0
 
     val kmeans_start = timeStart()
