@@ -18,7 +18,7 @@
 package org.apache.spark.examples
 
 import scala.util.Random
-import org.apache.spark.SparkContext
+import org.apache.spark.{HashPartitioner, SparkContext}
 import org.apache.spark.util.Vector
 import org.apache.spark.SparkContext._
 import java.util
@@ -84,8 +84,8 @@ object SparkKMeans {
   }
 
   def main(args: Array[String]) {
-    if (args.length < 7) {
-        System.err.println("Usage: SparkKMeans <master> <file> <k> <convergeDist> <normalize?> <maxiters> <clusters_compared>")
+    if (args.length < 8) {
+        System.err.println("Usage: SparkKMeans <master> <file> <k> <convergeDist> <normalize?> <maxiters> <clusters_compared> <force no combine?>")
         System.exit(1)
     }
     val sc = new SparkContext(args(0), "SparkKMeans",
@@ -96,6 +96,7 @@ object SparkKMeans {
     val convergeDist = args(3).toDouble
     val maxiters = args(5).toInt
     val clusters_compared = args(6).toInt
+    val force_no_combiner = args(7).toInt
 
     // normalize all features so they are weighted equally
     val sum = data.reduce(_ + _)
@@ -118,11 +119,20 @@ object SparkKMeans {
     while((tempDist > convergeDist) && ((maxiters==0) || (iter < maxiters))) {
       val iter_start = timeStart()
       val closest = normalized_data.map (p => (closestPoint(p, kPoints,clusters_compared), (p, 1)))
-      
+
+      // this partitions the map values BEFORE reduceByKey so no local reductions are done
+      // TODO: verify that spark lazy evaluation will not ellide this?
+      if (force_no_combiner) {
+        closest.partitionBy(new HashPartitioner(closest.partitions.size))
+      }
+
       val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
-      
+
+
       val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
-      
+
+
+
       tempDist = 0.0
       for (i <- 0 until K) {
         tempDist += kPoints(i).squaredDist(newPoints(i))
