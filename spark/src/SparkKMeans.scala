@@ -58,25 +58,37 @@ object SparkKMeans {
     new Vector(list)
   }
   
-  def closestPoint(p: Vector, centers: Array[Vector]): Int = {
+  def closestPoint(p: Vector, centers: Array[Vector], clusters_compared: Int): Int = {
     var index = 0
     var bestIndex = 0
     var closest = Double.PositiveInfinity
-  
-    for (i <- 0 until centers.length) {
-      val tempDist = p.squaredDist(centers(i))
-      if (tempDist < closest) {
-        closest = tempDist
-        bestIndex = i
+
+    if (clusters_compared == 0) {
+
+      for (i <- 0 until centers.length) {
+        val tempDist = p.squaredDist(centers(i))
+        if (tempDist < closest) {
+          closest = tempDist
+          bestIndex = i
+        }
+      }
+    } else {
+      val ccPoints = normalized_data.takeSample(withReplacement = false, clusters_compared, 43).toArray
+      for (i <- 0 until ccPoints.length) {
+        val tempDist = p.squaredDist(centers(i))
+        if (tempDist < closest) {
+          closest = tempDist
+          bestIndex = i
+        }
       }
     }
-  
+
     bestIndex
   }
 
   def main(args: Array[String]) {
-    if (args.length < 6) {
-        System.err.println("Usage: SparkKMeans <master> <file> <k> <convergeDist> <normalize?> <maxiters>")
+    if (args.length < 7) {
+        System.err.println("Usage: SparkKMeans <master> <file> <k> <convergeDist> <normalize?> <maxiters> <clusters_compared>")
         System.exit(1)
     }
     val sc = new SparkContext(args(0), "SparkKMeans",
@@ -86,6 +98,7 @@ object SparkKMeans {
     val K = args(2).toInt
     val convergeDist = args(3).toDouble
     val maxiters = args(5).toInt
+    val clusters_compared = args(6).toInt
 
     // normalize all features so they are weighted equally
     val sum = data.reduce(_ + _)
