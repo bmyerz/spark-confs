@@ -17,7 +17,7 @@
 
 package org.apache.spark.examples
 
-import java.util.Random
+import scala.util.Random
 import org.apache.spark.SparkContext
 import org.apache.spark.util.Vector
 import org.apache.spark.SparkContext._
@@ -34,8 +34,6 @@ object SparkKMeans {
     val end = System.nanoTime();
     return (end-start)/1e9
   }
-
-  val rand = new Random(42)
 
   def parseVector(line: String): Vector = {
     val burn = 2
@@ -73,9 +71,8 @@ object SparkKMeans {
         }
       }
     } else {
-      val ccPoints = normalized_data.takeSample(withReplacement = false, clusters_compared, 43).toArray
-      for (i <- 0 until ccPoints.length) {
-        val tempDist = p.squaredDist(centers(i))
+      for (i <- 0 until clusters_compared) {
+        val tempDist = p.squaredDist(centers(Random.nextInt(centers.length))) // probably should sample without replacement
         if (tempDist < closest) {
           closest = tempDist
           bestIndex = i
@@ -120,7 +117,7 @@ object SparkKMeans {
     var iter = 0
     while((tempDist > convergeDist) && ((maxiters==0) || (iter < maxiters))) {
       val iter_start = timeStart()
-      val closest = normalized_data.map (p => (closestPoint(p, kPoints), (p, 1)))
+      val closest = normalized_data.map (p => (closestPoint(p, kPoints,clusters_compared), (p, 1)))
       
       val pointStats = closest.reduceByKey{case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)}
       
