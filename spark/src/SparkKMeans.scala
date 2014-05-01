@@ -126,6 +126,7 @@ object SparkKMeans {
     var iter = 0
     while((tempDist > convergeDist) && ((maxiters==0) || (iter < maxiters))) {
       val iter_start = timeStart()
+      val map_start = iter_start
 
       val closest =
         if (!RR) {
@@ -140,6 +141,11 @@ object SparkKMeans {
           })
         }
 
+      println("closest.count = " + closest.count())
+      val map_time = timeEnd(map_start)
+      println("MapTime: " + map_time)
+      val reduce_start =  timeStart()
+
       // this partitions the map values BEFORE reduceByKey so no local reductions are done
       // TODO: verify that spark lazy evaluation will not ellide this?
       if (force_no_combiner) {
@@ -150,8 +156,11 @@ object SparkKMeans {
 
 
       val newPoints = pointStats.map {pair => (pair._1, pair._2._1 / pair._2._2)}.collectAsMap()
+      println("newPoints = " + newPoints.size)
+      val reduce_time = timeEnd(reduce_start)
+      print("ReduceTime: " + reduce_time)
 
-
+      var other_start = timeStart()
 
       tempDist = 0.0
       for (i <- 0 until K) {
@@ -164,6 +173,7 @@ object SparkKMeans {
       val iter_runtime = timeEnd(iter_start)
       println("Finished iteration " + iter + " (delta = " + tempDist + ") (iter_runtime = " + iter_runtime + ")")
       iter+=1
+      println("other time: "+ timeEnd(other_start))
     }
 
     val kmeans_runtime = timeEnd(kmeans_start)
