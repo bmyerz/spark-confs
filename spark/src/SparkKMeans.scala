@@ -108,7 +108,7 @@ object SparkKMeans {
     var normalized_data = data;
     val numPoints = normalized_data.count()
     val numPartitions = normalized_data.partitioner.size
-    val skipSize = (K.toDouble / numPartitions) // to help RR assignment be fair
+    val skipSize: Int = (K.toDouble / numPartitions).toInt // to help RR assignment be fair
     if (args(4).toBoolean) {
       println("normalizing")
       normalized_data = data.map( v => elementWiseDivide(v, sum))
@@ -129,11 +129,14 @@ object SparkKMeans {
 
       val closest =
         if (!RR) {
+            println("NOT RR RUNNING")
           normalized_data.map (p => (closestPoint(p, kPoints), (p, 1)))
         } else {
-          noramlized_data.mapPartitionsWithIndex( {(a: Int, vals: Iterator[Vector]) =>
-            var ctr = a * skipSize - 1
-            vals.map{ p => ctr+=1; (closestPointRR(p, kPoints, ctr)%K, (p, 1)) }
+            println("RR RUNNING")
+          normalized_data.mapPartitionsWithIndex( {(a: Int, vals: Iterator[Vector]) =>
+            //var ctr: Int = a * skipSize - 1
+            //vals.map{ p => ctr+=1; println("COUNTER " + a + " " + ctr); (closestPointRR(p, kPoints, ctr)%K, (p, 1)) }
+            vals.map{ p => (closestPoint(p, kPoints), (p, 1)) }
           })
         }
 
