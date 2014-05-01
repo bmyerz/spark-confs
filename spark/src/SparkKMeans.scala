@@ -55,13 +55,17 @@ object SparkKMeans {
     }
     new Vector(list)
   }
-  
-  def closestPoint(p: Vector, centers: Array[Vector], clusters_compared: Int): Int = {
+
+  def closestPointRR(p: Vector, centers: Array[Vector], offset: Int): Int = {
+    return offset;
+  }
+
+  def closestPoint(p: Vector, centers: Array[Vector]/*, clusters_compared: Int*/): Int = {
     var index = 0
     var bestIndex = 0
     var closest = Double.PositiveInfinity
 
-    if (clusters_compared == 0) {
+    //if (clusters_compared == 0) {
 
       for (i <- 0 until centers.length) {
         val tempDist = p.squaredDist(centers(i))
@@ -70,7 +74,7 @@ object SparkKMeans {
           bestIndex = i
         }
       }
-    } else {
+    /*} else {
       for (i <- 0 until clusters_compared) {
         val tempDist = p.squaredDist(centers(Random.nextInt(centers.length))) // probably should sample without replacement
         if (tempDist < closest) {
@@ -78,14 +82,14 @@ object SparkKMeans {
           bestIndex = i
         }
       }
-    }
+    }*/
 
     bestIndex
   }
 
   def main(args: Array[String]) {
     if (args.length < 8) {
-        System.err.println("Usage: SparkKMeans <master> <file> <k> <convergeDist> <normalize?> <maxiters> <clusters_compared> <force no combine?>")
+        System.err.println("Usage: SparkKMeans <master> <file> <k> <convergeDist> <normalize?> <maxiters> <RR> <force no combine?>")
         System.exit(1)
     }
     val sc = new SparkContext(args(0), "SparkKMeans",
@@ -95,12 +99,15 @@ object SparkKMeans {
     val K = args(2).toInt
     val convergeDist = args(3).toDouble
     val maxiters = args(5).toInt
-    val clusters_compared = args(6).toInt
+    val RR = args(6).toBoolean
     val force_no_combiner = args(7).toBoolean
 
     // normalize all features so they are weighted equally
     val sum = data.reduce(_ + _)
     var normalized_data = data;
+    val numPoints = normalized_data.count()
+    val numPartitions = normalized_data.partitioner.size
+    val skipSize = (K.toDouble / numPartitions) // to help RR assignment be fair
     if (args(4).toBoolean) {
       println("normalizing")
       normalized_data = data.map( v => elementWiseDivide(v, sum))
@@ -118,7 +125,15 @@ object SparkKMeans {
     var iter = 0
     while((tempDist > convergeDist) && ((maxiters==0) || (iter < maxiters))) {
       val iter_start = timeStart()
-      val closest = normalized_data.map (p => (closestPoint(p, kPoints,clusters_compared), (p, 1)))
+      var closest: Vector = Nil
+      if (!RR) {
+        closest = normalized_data.map (p => (closestPoint(p, kPoints), (p, 1)))
+      } else {
+        closest = noramlized_data.mapPartitionsWithIndex( {(a: Int, vals: Iterator[Vector]) =>
+          var ctr = a * skipSize - 1
+          vals.map{ p => ctr+=1; (closestPointRR(p, kPoints, ctr)%K, (p, 1)) }
+        })
+      }
 
       // this partitions the map values BEFORE reduceByKey so no local reductions are done
       // TODO: verify that spark lazy evaluation will not ellide this?
