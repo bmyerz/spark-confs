@@ -96,7 +96,7 @@ object SparkKMeans {
     val convergeDist = args(3).toDouble
     val maxiters = args(5).toInt
     val clusters_compared = args(6).toInt
-    val force_no_combiner = args(7).toInt
+    val force_no_combiner = args(7).toBoolean
 
     // normalize all features so they are weighted equally
     val sum = data.reduce(_ + _)
