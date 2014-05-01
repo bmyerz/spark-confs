@@ -127,15 +127,15 @@ object SparkKMeans {
     while((tempDist > convergeDist) && ((maxiters==0) || (iter < maxiters))) {
       val iter_start = timeStart()
 
-      var closest: RDD[(Int, (Vector, Int))] = Null
-      if (!RR) {
-        closest = normalized_data.map (p => (closestPoint(p, kPoints), (p, 1)))
-      } else {
-        closest = noramlized_data.mapPartitionsWithIndex( {(a: Int, vals: Iterator[Vector]) =>
-          var ctr = a * skipSize - 1
-          vals.map{ p => ctr+=1; (closestPointRR(p, kPoints, ctr)%K, (p, 1)) }
-        })
-      }
+      val closest =
+        if (!RR) {
+          normalized_data.map (p => (closestPoint(p, kPoints), (p, 1)))
+        } else {
+          noramlized_data.mapPartitionsWithIndex( {(a: Int, vals: Iterator[Vector]) =>
+            var ctr = a * skipSize - 1
+            vals.map{ p => ctr+=1; (closestPointRR(p, kPoints, ctr)%K, (p, 1)) }
+          })
+        }
 
       // this partitions the map values BEFORE reduceByKey so no local reductions are done
       // TODO: verify that spark lazy evaluation will not ellide this?
