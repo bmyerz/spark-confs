@@ -22,6 +22,7 @@ import org.apache.spark.{HashPartitioner, SparkContext}
 import org.apache.spark.util.Vector
 import org.apache.spark.SparkContext._
 import java.util
+import org.apache.spark.rdd.RDD
 
 /**
  * K-means clustering.
@@ -125,7 +126,8 @@ object SparkKMeans {
     var iter = 0
     while((tempDist > convergeDist) && ((maxiters==0) || (iter < maxiters))) {
       val iter_start = timeStart()
-      var closest: Vector = Nil
+
+      var closest: RDD[(Int, (Vector, Int))] = Null
       if (!RR) {
         closest = normalized_data.map (p => (closestPoint(p, kPoints), (p, 1)))
       } else {
